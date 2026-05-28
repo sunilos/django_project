@@ -4,7 +4,7 @@
 
     <form method="POST" id="searchForm">
         {% csrf_token %}
-        <input type="hidden" id="page_number" name="page_number" value="{{page_list.number|default:1}}">
+        <input type="hidden" id="page_number" name="page_number" value="{{pageList.number|default:1}}">
 
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -57,9 +57,9 @@
                     <th scope="col">ACTION</th>
                 </thead>
                 <tbody class="text-center">
-                    {% for e in page_list %}
+                    {% for e in pageList %}
                     <tr>
-                        <td>{{page_list.start_index|add:forloop.counter0}}</td>
+                        <td>{{pageList.start_index|add:forloop.counter0}}</td>
                         <td>{{e.name}}</td>
                         <td>{{e.description}}</td>
                         <td>{{e.course_name}}</td>
@@ -82,26 +82,26 @@
 
             <div class="d-flex justify-content-between align-items-center mt-1 mb-3">
                 <small class="text-muted">
-                    {% if page_list.paginator.count %}
-                        Showing {{page_list.start_index}} to {{page_list.end_index}} of {{page_list.paginator.count}} records
+                    {% if pageList.paginator.count %}
+                        Showing {{pageList.start_index}} to {{pageList.end_index}} of {{pageList.paginator.count}} records
                     {% endif %}
                 </small>
                 <div>
-                    {% if page_list.has_previous %}
+                    {% if pageList.has_previous %}
                     <button type="button" class="btn btn-outline-secondary btn-sm"
-                            data-page="{{page_list.previous_page_number}}"
+                            data-page="{{pageList.previous_page_number}}"
                             onclick="gotoPage(this.dataset.page)">
                         &laquo; Previous
                     </button>
                     {% endif %}
 
                     <span class="mx-2 small">
-                        Page {{page_list.number}} of {{page_list.paginator.num_pages}}
+                        Page {{pageList.number}} of {{pageList.paginator.num_pages}}
                     </span>
 
-                    {% if page_list.has_next %}
+                    {% if pageList.has_next %}
                     <button type="button" class="btn btn-outline-secondary btn-sm"
-                            data-page="{{page_list.next_page_number}}"
+                            data-page="{{pageList.next_page_number}}"
                             onclick="gotoPage(this.dataset.page)">
                         Next &raquo;
                     </button>

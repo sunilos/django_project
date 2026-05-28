@@ -27,7 +27,7 @@ class SubjectListCtl(BaseCtl):
         return render(
             request,
             self.get_template(),
-            {"page_list": page_list, "form": self.form, "preload_data": self.preload(request)},
+            {"pageList": page_list, "form": self.form, "preload_data": self.preload(request)},
         )
 
     def submit(self, request, params={}):
@@ -37,7 +37,7 @@ class SubjectListCtl(BaseCtl):
         return render(
             request,
             self.get_template(),
-            {"page_list": page_list, "form": self.form, "preload_data": self.preload(request)},
+            {"pageList": page_list, "form": self.form, "preload_data": self.preload(request)},
         )
 
     def get_template(self):

@@ -44,7 +44,7 @@ class TimeTableListCtl(BaseCtl):
         page_list = self.get_service().search(self.form, page_number=1)
         return render(request, self.get_template(), {
             "form": self.form,
-            "page_list": page_list,
+            "pageList": page_list,
             "preload_data": self.preload(request),
         })
 
@@ -53,7 +53,7 @@ class TimeTableListCtl(BaseCtl):
         page_list = self.get_service().search(self.form, page_number=page_number)
         return render(request, self.get_template(), {
             "form": self.form,
-            "page_list": page_list,
+            "pageList": page_list,
             "preload_data": self.preload(request),
         })
 
