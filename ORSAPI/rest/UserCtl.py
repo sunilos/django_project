@@ -50,13 +50,15 @@ class UserLoginCtl(BaseRestCtl):
         return UserSerializers
 
     def post(self, request):
-        login = request.data.get("login", "")
-        password = request.data.get("password", "")
+        loginId = request.data.get("loginId", "")
 
-        if not login or not password:
+        password = request.data.get("password", "")
+        print("Login attempt for:", loginId, password)  # Debug log
+
+        if not loginId or not password:
             return self.error_response(None, "Login and password are required", status.HTTP_400_BAD_REQUEST)
 
-        user = UserService().authenticate({"login": login, "password": password})
+        user = UserService().authenticate({"loginId": loginId, "password": password})
         if user is None:
             return self.error_response(None, "Invalid login or password", status.HTTP_401_UNAUTHORIZED)
 
@@ -103,14 +105,14 @@ class ChangePasswordCtl(BaseRestCtl):
         return UserSerializers
 
     def post(self, request):
-        login = request.data.get("login", "")
+        loginId = request.data.get("loginId", "")
         old_password = request.data.get("oldPassword", "")
         new_password = request.data.get("newPassword", "")
         confirm_password = request.data.get("confirmPassword", "")
 
         errors = {}
-        if not login:
-            errors["login"] = "Login cannot be null"
+        if not loginId:
+            errors["loginId"] = "Login cannot be null"
         if not old_password:
             errors["oldPassword"] = "Old Password cannot be null"
         if not new_password:
@@ -123,7 +125,7 @@ class ChangePasswordCtl(BaseRestCtl):
             return self.error_response(errors, "Validation failed", status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(login=login)
+            user = User.objects.get(login=loginId)
         except User.DoesNotExist:
             return self.error_response(None, "User not found", status.HTTP_404_NOT_FOUND)
 
@@ -168,12 +170,12 @@ class ForgotPasswordCtl(BaseRestCtl):
         return UserSerializers
 
     def post(self, request):
-        login = request.data.get("login", "")
+        loginId = request.data.get("login", "")
 
-        if not login:
+        if not loginId:
             return self.error_response(None, "Login cannot be null", status.HTTP_400_BAD_REQUEST)
 
-        user_qs = ForgetPasswordService().search({"login": login})
+        user_qs = ForgetPasswordService().search({"login": loginId})
         if user_qs.count() == 0:
             return self.error_response(None, "No account found with this email", status.HTTP_404_NOT_FOUND)
 
@@ -223,7 +225,7 @@ class UserRegistrationCtl(BaseRestCtl):
 
         first_name = data.get("firstName", "")
         last_name = data.get("lastName", "")
-        login = data.get("login", "")
+        loginId = data.get("login", "")
         password = data.get("password", "")
         mobile = data.get("mobileNumber", "")
         gender = data.get("gender", "Male")
@@ -233,11 +235,11 @@ class UserRegistrationCtl(BaseRestCtl):
             errors["firstName"] = "First Name cannot be null"
         if not last_name:
             errors["lastName"] = "Last Name cannot be null"
-        if not login:
+        if not loginId:
             errors["login"] = "Login cannot be null"
-        elif "@" not in login or "." not in login:
+        elif "@" not in loginId or "." not in loginId:
             errors["login"] = "Login must be a valid email address"
-        elif User.objects.filter(login=login).exists():
+        elif User.objects.filter(login=loginId).exists():
             errors["login"] = "This email is already registered"
         if not password:
             errors["password"] = "Password cannot be null"
@@ -251,7 +253,7 @@ class UserRegistrationCtl(BaseRestCtl):
         user = User()
         user.firstName = first_name
         user.lastName = last_name
-        user.login = login
+        user.login = loginId
         user.password = password
         user.mobileNumber = mobile
         user.gender = gender
@@ -261,10 +263,9 @@ class UserRegistrationCtl(BaseRestCtl):
         UserService().save(user)
 
         msg = EmailMessage()
-        msg.to = [login]
+        msg.to = [loginId]
         msg.subject = "Welcome - Registration Successful"
-        msg.text = EmailBuilder.sign_up({"firstName": first_name, "login": login, "password": password})
+        msg.text = EmailBuilder.sign_up({"firstName": first_name, "login": loginId, "password": password})
         EmailService.send(msg)
 
         return self.success_response(UserSerializers(user).data, "Registration successful", status.HTTP_201_CREATED)
-    
