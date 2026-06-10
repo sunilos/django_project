@@ -2,6 +2,7 @@
 from service.models import College
 from service.Serializers import CollegeSerializers
 from service.service.CollegeService import CollegeService
+from service.utility.DataValidator import DataValidator
 
 
 class CollegeRestCtl(BaseRestCtl):
@@ -23,31 +24,31 @@ class CollegeRestCtl(BaseRestCtl):
         city = data.get("city", "")
         phone = data.get("phoneNumber", "")
 
-        if not name:
+        if DataValidator.isNull(name):
             errors["name"] = "Name cannot be null"
-        elif len(name) > 50:
+        elif not DataValidator.isMaxLength(name, 50):
             errors["name"] = "Name cannot exceed 50 characters"
 
-        if not address:
+        if DataValidator.isNull(address):
             errors["address"] = "Address cannot be null"
-        elif len(address) > 50:
+        elif not DataValidator.isMaxLength(address, 50):
             errors["address"] = "Address cannot exceed 50 characters"
 
-        if not state:
+        if DataValidator.isNull(state):
             errors["state"] = "State cannot be null"
-        elif len(state) > 50:
+        elif not DataValidator.isMaxLength(state, 50):
             errors["state"] = "State cannot exceed 50 characters"
 
-        if not city:
+        if DataValidator.isNull(city):
             errors["city"] = "City cannot be null"
-        elif len(city) > 20:
+        elif not DataValidator.isMaxLength(city, 20):
             errors["city"] = "City cannot exceed 20 characters"
 
-        if not phone:
+        if DataValidator.isNull(phone):
             errors["phoneNumber"] = "Phone Number cannot be null"
-        elif not phone.isdigit():
+        elif not DataValidator.isDigit(phone):
             errors["phoneNumber"] = "Phone Number must contain digits only"
-        elif len(phone) > 20:
+        elif not DataValidator.isMaxLength(phone, 20):
             errors["phoneNumber"] = "Phone Number cannot exceed 20 characters"
 
         return errors

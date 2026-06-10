@@ -2,6 +2,7 @@
 from service.models import Course
 from service.Serializers import CourseSerializers
 from service.service.CourseService import CourseService
+from service.utility.DataValidator import DataValidator
 
 
 class CourseRestCtl(BaseRestCtl):
@@ -21,19 +22,19 @@ class CourseRestCtl(BaseRestCtl):
         description = data.get("description", "")
         duration = data.get("duration", "")
 
-        if not name:
+        if DataValidator.isNull(name):
             errors["name"] = "Name cannot be null"
-        elif len(name) > 50:
+        elif not DataValidator.isMaxLength(name, 50):
             errors["name"] = "Name cannot exceed 50 characters"
 
-        if not description:
+        if DataValidator.isNull(description):
             errors["description"] = "Description cannot be null"
-        elif len(description) > 100:
+        elif not DataValidator.isMaxLength(description, 100):
             errors["description"] = "Description cannot exceed 100 characters"
 
-        if not duration:
+        if DataValidator.isNull(duration):
             errors["duration"] = "Duration cannot be null"
-        elif len(duration) > 100:
+        elif not DataValidator.isMaxLength(duration, 100):
             errors["duration"] = "Duration cannot exceed 100 characters"
 
         return errors

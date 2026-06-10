@@ -76,6 +76,18 @@ class DataValidator:
         return True
 
     @classmethod
+    def isDigit(self, val):
+        """Return True if val is non-empty and contains digits only."""
+        if val is None or val == "":
+            return False
+        return str(val).isdigit()
+
+    @classmethod
+    def isMaxLength(self, val, max_len):
+        """Return True if the string length of val does not exceed max_len."""
+        return len(str(val)) <= max_len
+
+    @classmethod
     def isRange(self, val, min_val, max_val):
         """Return True if val can be converted to float and falls within [min_val, max_val] inclusive."""
         try:

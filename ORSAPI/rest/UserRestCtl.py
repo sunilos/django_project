@@ -14,6 +14,7 @@ from service.service.ForgetPasswordService import ForgetPasswordService
 from service.mail.EmailService import EmailService
 from service.mail.EmailBuilder import EmailBuilder
 from service.mail.EmailMessage import EmailMessage
+from service.utility.DataValidator import DataValidator
 
 
 class UserRestCtl(BaseRestCtl):
@@ -36,41 +37,39 @@ class UserRestCtl(BaseRestCtl):
         mobile = data.get("mobileNumber", "")
         role_id = data.get("role_id", "")
 
-        if not first_name:
+        if DataValidator.isNull(first_name):
             errors["firstName"] = "First Name cannot be null"
-        elif len(first_name) > 50:
+        elif not DataValidator.isMaxLength(first_name, 50):
             errors["firstName"] = "First Name cannot exceed 50 characters"
 
-        if not last_name:
+        if DataValidator.isNull(last_name):
             errors["lastName"] = "Last Name cannot be null"
-        elif len(last_name) > 50:
+        elif not DataValidator.isMaxLength(last_name, 50):
             errors["lastName"] = "Last Name cannot exceed 50 characters"
 
-        if not login:
+        if DataValidator.isNull(login):
             errors["login"] = "Login cannot be null"
-        elif "@" not in login or "." not in login:
+        elif not DataValidator.isEmail(login):
             errors["login"] = "Login must be a valid email address"
 
-        if not password:
+        if DataValidator.isNull(password):
             errors["password"] = "Password cannot be null"
-        elif len(password) > 20:
+        elif not DataValidator.isMaxLength(password, 20):
             errors["password"] = "Password cannot exceed 20 characters"
 
-        if not mobile:
+        if DataValidator.isNull(mobile):
             errors["mobileNumber"] = "Mobile Number cannot be null"
-        elif not str(mobile).isdigit():
+        elif not DataValidator.isDigit(mobile):
             errors["mobileNumber"] = "Mobile Number must contain digits only"
-        elif len(str(mobile)) > 15:
+        elif not DataValidator.isMaxLength(mobile, 15):
             errors["mobileNumber"] = "Mobile Number cannot exceed 15 characters"
 
-        if not role_id:
+        if DataValidator.isNull(role_id):
             errors["role_id"] = "Role cannot be null"
-        else:
-            try:
-                if int(role_id) <= 0:
-                    errors["role_id"] = "Role ID must be a positive integer"
-            except (ValueError, TypeError):
-                errors["role_id"] = "Role ID must be a valid integer"
+        elif not DataValidator.isInteger(role_id):
+            errors["role_id"] = "Role ID must be a valid integer"
+        elif int(role_id) <= 0:
+            errors["role_id"] = "Role ID must be a positive integer"
 
         return errors
 

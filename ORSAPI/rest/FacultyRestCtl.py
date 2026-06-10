@@ -4,6 +4,7 @@ from ORSAPI.rest.BaseRestCtl import BaseRestCtl
 from service.models import Faculty, College, Course, Subject
 from service.Serializers import FacultySerializers
 from service.service.FacultyService import FacultyService
+from service.utility.DataValidator import DataValidator
 
 
 class FacultyRestCtl(BaseRestCtl):
@@ -25,29 +26,29 @@ class FacultyRestCtl(BaseRestCtl):
         mobile = data.get("mobileNumber", "")
         gender = data.get("gender", "")
 
-        if not first_name:
+        if DataValidator.isNull(first_name):
             errors["firstName"] = "First Name cannot be null"
-        elif len(first_name) > 50:
+        elif not DataValidator.isMaxLength(first_name, 50):
             errors["firstName"] = "First Name cannot exceed 50 characters"
 
-        if not last_name:
+        if DataValidator.isNull(last_name):
             errors["lastName"] = "Last Name cannot be null"
-        elif len(last_name) > 50:
+        elif not DataValidator.isMaxLength(last_name, 50):
             errors["lastName"] = "Last Name cannot exceed 50 characters"
 
-        if not email:
+        if DataValidator.isNull(email):
             errors["email"] = "Email cannot be null"
-        elif "@" not in email or "." not in email:
+        elif not DataValidator.isEmail(email):
             errors["email"] = "Email must be a valid email address"
 
-        if not mobile:
+        if DataValidator.isNull(mobile):
             errors["mobileNumber"] = "Mobile Number cannot be null"
-        elif not str(mobile).isdigit():
+        elif not DataValidator.isDigit(mobile):
             errors["mobileNumber"] = "Mobile Number must contain digits only"
-        elif len(str(mobile)) > 20:
+        elif not DataValidator.isMaxLength(mobile, 20):
             errors["mobileNumber"] = "Mobile Number cannot exceed 20 characters"
 
-        if not gender:
+        if DataValidator.isNull(gender):
             errors["gender"] = "Gender cannot be null"
 
         return errors

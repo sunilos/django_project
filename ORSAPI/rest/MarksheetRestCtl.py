@@ -2,6 +2,7 @@
 from service.models import Marksheet
 from service.Serializers import MarksheetSerializers
 from service.service.MarksheetService import MarksheetService
+from service.utility.DataValidator import DataValidator
 
 
 class MarksheetRestCtl(BaseRestCtl):
@@ -25,45 +26,33 @@ class MarksheetRestCtl(BaseRestCtl):
         year = data.get("year")
         student_id = data.get("student_id", "")
 
-        if not roll_number:
+        if DataValidator.isNull(roll_number):
             errors["rollNumber"] = "Roll Number cannot be null"
-        elif len(str(roll_number)) > 50:
+        elif not DataValidator.isMaxLength(roll_number, 50):
             errors["rollNumber"] = "Roll Number cannot exceed 50 characters"
 
-        if not name:
+        if DataValidator.isNull(name):
             errors["name"] = "Name cannot be null"
-        elif len(name) > 50:
+        elif not DataValidator.isMaxLength(name, 50):
             errors["name"] = "Name cannot exceed 50 characters"
 
         for field, value in (("physics", physics), ("chemistry", chemistry), ("maths", maths)):
-            if value is None or value == "":
+            if DataValidator.isNull(value):
                 errors[field] = f"{field.capitalize()} marks cannot be null"
-            else:
-                try:
-                    val = int(value)
-                    if val < 0 or val > 100:
-                        errors[field] = f"{field.capitalize()} marks must be between 0 and 100"
-                except (ValueError, TypeError):
-                    errors[field] = f"{field.capitalize()} marks must be a valid integer"
+            elif not DataValidator.isRange(value, 0, 100):
+                errors[field] = f"{field.capitalize()} marks must be between 0 and 100"
 
-        if year is None or year == "":
+        if DataValidator.isNull(year):
             errors["year"] = "Year cannot be null"
-        else:
-            try:
-                y = int(year)
-                if y < 1900 or y > 2100:
-                    errors["year"] = "Year must be between 1900 and 2100"
-            except (ValueError, TypeError):
-                errors["year"] = "Year must be a valid integer"
+        elif not DataValidator.isRange(year, 1900, 2100):
+            errors["year"] = "Year must be between 1900 and 2100"
 
-        if not student_id:
+        if DataValidator.isNull(student_id):
             errors["student_id"] = "Student cannot be null"
-        else:
-            try:
-                if int(student_id) <= 0:
-                    errors["student_id"] = "Student ID must be a positive integer"
-            except (ValueError, TypeError):
-                errors["student_id"] = "Student ID must be a valid integer"
+        elif not DataValidator.isInteger(student_id):
+            errors["student_id"] = "Student ID must be a valid integer"
+        elif int(student_id) <= 0:
+            errors["student_id"] = "Student ID must be a positive integer"
 
         return errors
 

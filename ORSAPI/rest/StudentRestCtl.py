@@ -4,6 +4,7 @@ from ORSAPI.rest.BaseRestCtl import BaseRestCtl
 from service.models import Student, College
 from service.Serializers import StudentSerializers
 from service.service.StudentService import StudentService
+from service.utility.DataValidator import DataValidator
 
 
 class StudentRestCtl(BaseRestCtl):
@@ -25,36 +26,34 @@ class StudentRestCtl(BaseRestCtl):
         email = data.get("email", "")
         college_id = data.get("college_ID", "")
 
-        if not first_name:
+        if DataValidator.isNull(first_name):
             errors["firstName"] = "First Name cannot be null"
-        elif len(first_name) > 50:
+        elif not DataValidator.isMaxLength(first_name, 50):
             errors["firstName"] = "First Name cannot exceed 50 characters"
 
-        if not last_name:
+        if DataValidator.isNull(last_name):
             errors["lastName"] = "Last Name cannot be null"
-        elif len(last_name) > 50:
+        elif not DataValidator.isMaxLength(last_name, 50):
             errors["lastName"] = "Last Name cannot exceed 50 characters"
 
-        if not mobile:
+        if DataValidator.isNull(mobile):
             errors["mobileNumber"] = "Mobile Number cannot be null"
-        elif not str(mobile).isdigit():
+        elif not DataValidator.isDigit(mobile):
             errors["mobileNumber"] = "Mobile Number must contain digits only"
-        elif len(str(mobile)) > 20:
+        elif not DataValidator.isMaxLength(mobile, 20):
             errors["mobileNumber"] = "Mobile Number cannot exceed 20 characters"
 
-        if not email:
+        if DataValidator.isNull(email):
             errors["email"] = "Email cannot be null"
-        elif "@" not in email or "." not in email:
+        elif not DataValidator.isEmail(email):
             errors["email"] = "Email must be a valid email address"
 
-        if not college_id:
+        if DataValidator.isNull(college_id):
             errors["college_ID"] = "College cannot be null"
-        else:
-            try:
-                if int(college_id) <= 0:
-                    errors["college_ID"] = "College ID must be a positive integer"
-            except (ValueError, TypeError):
-                errors["college_ID"] = "College ID must be a valid integer"
+        elif not DataValidator.isInteger(college_id):
+            errors["college_ID"] = "College ID must be a valid integer"
+        elif int(college_id) <= 0:
+            errors["college_ID"] = "College ID must be a positive integer"
 
         return errors
 

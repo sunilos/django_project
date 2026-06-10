@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from ORS.utility.DataValidator import DataValidator
+from service.utility.DataValidator import DataValidator
 from service.service.UserService import UserService
 from .BaseCtl import BaseCtl
 

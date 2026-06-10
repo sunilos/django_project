@@ -2,6 +2,7 @@
 from service.models import Role
 from service.Serializers import RoleSerializers
 from service.service.RoleService import RoleService
+from service.utility.DataValidator import DataValidator
 
 
 class RoleRestCtl(BaseRestCtl):
@@ -20,14 +21,14 @@ class RoleRestCtl(BaseRestCtl):
         name = data.get("name", "")
         description = data.get("description", "")
 
-        if not name:
+        if DataValidator.isNull(name):
             errors["name"] = "Name cannot be null"
-        elif len(name) > 100:
+        elif not DataValidator.isMaxLength(name, 100):
             errors["name"] = "Name cannot exceed 100 characters"
 
-        if not description:
+        if DataValidator.isNull(description):
             errors["description"] = "Description cannot be null"
-        elif len(description) > 500:
+        elif not DataValidator.isMaxLength(description, 500):
             errors["description"] = "Description cannot exceed 500 characters"
 
         return errors
