@@ -16,6 +16,15 @@ class BaseRestCtl(APIView, ABC):
         pass
 
     @abstractmethod
+    def get_service(self):
+        """Return the Django service class for this controller."""
+        pass
+
+    def input_validation(self, _data):
+        """Perform manual field validation on request data. Return a dict of {field: error} or {}."""
+        return {}
+
+    @abstractmethod
     def get_serializer_class(self):
         """Return the DRF serializer class for this controller."""
         pass
@@ -60,7 +69,9 @@ class BaseRestCtl(APIView, ABC):
             try:
                 obj = model.objects.get(id=id)
             except model.DoesNotExist:
-                return self.error_response(None, "Object not found", status.HTTP_404_NOT_FOUND)
+                return self.error_response(
+                    None, "Object not found", status.HTTP_404_NOT_FOUND
+                )
             return self.success_response(serializer_class(obj).data)
 
         filters = request.data if isinstance(request.data, dict) else {}
@@ -87,17 +98,18 @@ class BaseRestCtl(APIView, ABC):
     def post(self, request):
         """Validate and create a new record; return 201 on success or 400 on validation failure."""
         logger.info("%s.post()", self.__class__.__name__)
-        serializer = self.get_serializer_class()(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            msg = f"{self.get_resource_name()} saved successfully"
-            return self.success_response(
-                serializer.data,
-                msg,
-                status.HTTP_201_CREATED,
-            )
+        errors = self.input_validation(request.data)
+        if errors:
+            return self.error_response(errors, "Validation failed")
 
-        return self.error_response(serializer.errors, "Validation failed")
+        obj = self.get_model()(**request.data)
+        self.get_service()().save(obj)
+        msg = f"{self.get_resource_name()} saved successfully"
+        return self.success_response(
+            self.get_serializer_class()(obj).data,
+            msg,
+            status.HTTP_201_CREATED,
+        )
 
     def put(self, request, id):
         """Validate and update an existing record by id; return 404 if not found or 400 on validation failure."""

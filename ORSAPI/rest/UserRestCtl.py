@@ -20,8 +20,59 @@ class UserRestCtl(BaseRestCtl):
     def get_model(self):
         return User
 
+    def get_service(self):
+        return UserService
+
     def get_serializer_class(self):
         return UserSerializers
+
+    def input_validation(self, data):
+        errors = {}
+
+        first_name = data.get("firstName", "")
+        last_name = data.get("lastName", "")
+        login = data.get("login", "")
+        password = data.get("password", "")
+        mobile = data.get("mobileNumber", "")
+        role_id = data.get("role_id", "")
+
+        if not first_name:
+            errors["firstName"] = "First Name cannot be null"
+        elif len(first_name) > 50:
+            errors["firstName"] = "First Name cannot exceed 50 characters"
+
+        if not last_name:
+            errors["lastName"] = "Last Name cannot be null"
+        elif len(last_name) > 50:
+            errors["lastName"] = "Last Name cannot exceed 50 characters"
+
+        if not login:
+            errors["login"] = "Login cannot be null"
+        elif "@" not in login or "." not in login:
+            errors["login"] = "Login must be a valid email address"
+
+        if not password:
+            errors["password"] = "Password cannot be null"
+        elif len(password) > 20:
+            errors["password"] = "Password cannot exceed 20 characters"
+
+        if not mobile:
+            errors["mobileNumber"] = "Mobile Number cannot be null"
+        elif not str(mobile).isdigit():
+            errors["mobileNumber"] = "Mobile Number must contain digits only"
+        elif len(str(mobile)) > 15:
+            errors["mobileNumber"] = "Mobile Number cannot exceed 15 characters"
+
+        if not role_id:
+            errors["role_id"] = "Role cannot be null"
+        else:
+            try:
+                if int(role_id) <= 0:
+                    errors["role_id"] = "Role ID must be a positive integer"
+            except (ValueError, TypeError):
+                errors["role_id"] = "Role ID must be a valid integer"
+
+        return errors
 
 
 class UserLoginRestCtl(BaseRestCtl):
@@ -46,6 +97,9 @@ class UserLoginRestCtl(BaseRestCtl):
 
     def get_model(self):
         return User
+
+    def get_service(self):
+        return UserService
 
     def get_serializer_class(self):
         return UserSerializers
@@ -101,6 +155,9 @@ class ChangePasswordRestCtl(BaseRestCtl):
 
     def get_model(self):
         return User
+
+    def get_service(self):
+        return UserService
 
     def get_serializer_class(self):
         return UserSerializers
@@ -167,6 +224,9 @@ class ForgotPasswordRestCtl(BaseRestCtl):
     def get_model(self):
         return User
 
+    def get_service(self):
+        return ForgetPasswordService
+
     def get_serializer_class(self):
         return UserSerializers
 
@@ -216,6 +276,9 @@ class UserRegistrationRestCtl(BaseRestCtl):
 
     def get_model(self):
         return User
+
+    def get_service(self):
+        return UserService
 
     def get_serializer_class(self):
         return UserSerializers
