@@ -59,41 +59,49 @@ class BaseRestCtl(APIView, ABC):
         """Return a single record by id, or a (optionally filtered) list when id is omitted.
 
         When id is omitted and the request carries a JSON body, each key/value
-        pair is forwarded to queryset.filter() so the caller can narrow results
+        pair is forwarded to service.search() so the caller can narrow results
         without a dedicated search endpoint.
         """
         logger.info("%s.get() id=%s", self.__class__.__name__, id)
-        model = self.get_model()
+        service = self.get_service()()
         serializer_class = self.get_serializer_class()
         if id:
-            try:
-                obj = model.objects.get(id=id)
-            except model.DoesNotExist:
+            obj = service.get(id)
+            if obj is None:
                 return self.error_response(
                     None, "Object not found", status.HTTP_404_NOT_FOUND
                 )
             return self.success_response(serializer_class(obj).data)
 
+        print("request.data:", request.data)
         filters = request.data if isinstance(request.data, dict) else {}
         if filters:
             logger.info(
                 "%s.get() applying filters=%s", self.__class__.__name__, filters
             )
-            try:
-                queryset = model.objects.filter(**filters)
-            except Exception as exc:
-                logger.warning(
-                    "%s.get() invalid filter: %s", self.__class__.__name__, exc
-                )
-                msg = f"Invalid filter parameter: {exc}"
-                return self.error_response(
-                    None,
-                    msg,
-                    status.HTTP_400_BAD_REQUEST,
-                )
-        else:
-            queryset = model.objects.all()
+        queryset = service.search(filters)
         return self.success_response(serializer_class(queryset, many=True).data)
+
+    @classmethod
+    def search_view(cls):
+        """Return an as_view() entry where POST routes to search() instead of create."""
+        class _SearchView(cls):
+            def post(self, request, *args, **kwargs):
+                return self.search(request)
+
+        _SearchView.__name__ = f"{cls.__name__}SearchView"
+        return _SearchView.as_view()
+
+    def search(self, request):
+        filters = request.data if isinstance(request.data, dict) else {}
+        if filters:
+            logger.info(
+                "%s.search() applying filters=%s", self.__class__.__name__, filters
+            )
+        queryset = self.get_service()().search(filters)
+        return self.success_response(
+            self.get_serializer_class()(queryset, many=True).data
+        )
 
     def post(self, request):
         """Validate and create a new record; return 201 on success or 400 on validation failure."""
@@ -114,31 +122,30 @@ class BaseRestCtl(APIView, ABC):
     def put(self, request, id):
         """Validate and update an existing record by id; return 404 if not found or 400 on validation failure."""
         logger.info("%s.put() id=%s", self.__class__.__name__, id)
-        model = self.get_model()
-        try:
-            obj = model.objects.get(id=id)
-        except model.DoesNotExist:
+        service = self.get_service()()
+        obj = service.get(id)
+        if obj is None:
             msg = f"{self.get_resource_name()} not found"
             return self.error_response(None, msg, status.HTTP_404_NOT_FOUND)
 
-        serializer = self.get_serializer_class()(obj, data=request.data)
+        errors = self.input_validation(request.data)
+        if errors:
+            return self.error_response(errors, "Validation failed")
 
-        if serializer.is_valid():
-            serializer.save()
-            msg = f"{self.get_resource_name()} updated successfully"
-            return self.success_response(serializer.data, msg)
-
-        return self.error_response(serializer.errors, "Validation failed")
+        for field, value in request.data.items():
+            setattr(obj, field, value)
+        service.save(obj)
+        msg = f"{self.get_resource_name()} updated successfully"
+        return self.success_response(self.get_serializer_class()(obj).data, msg)
 
     def delete(self, request, id):
         """Delete a record by id; return 404 if not found."""
         logger.info("%s.delete() id=%s", self.__class__.__name__, id)
-        model = self.get_model()
-        try:
-            obj = model.objects.get(id=id)
-        except model.DoesNotExist:
+        service = self.get_service()()
+        obj = service.get(id)
+        if obj is None:
             msg = f"{self.get_resource_name()} not found"
             return self.error_response(None, msg, status.HTTP_404_NOT_FOUND)
-        obj.delete()
+        service.delete(id)
         msg = f"{self.get_resource_name()} deleted successfully"
         return self.success_response(None, msg)

@@ -1,24 +1,8 @@
 from service.models import Course
-from service.utility.DataValidator import DataValidator
 from .BaseDAO import BaseDAO
 
 
 class CourseDAO(BaseDAO):
-
-    def apply_filters(self, q, params):
-        val = params.get("name", None)
-        if DataValidator.isNotNull(val):
-            q = q.filter(name__icontains=val)
-
-        val = params.get("description", None)
-        if DataValidator.isNotNull(val):
-            q = q.filter(description__icontains=val)
-
-        val = params.get("duration", None)
-        if DataValidator.isNotNull(val):
-            q = q.filter(duration__icontains=val)
-
-        return q
 
     def get_model(self):
         return Course

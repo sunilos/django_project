@@ -40,7 +40,10 @@ class BaseDAO(ABC):
         return self.get(pk)
 
     def apply_filters(self, q, params):
-        pass
+        # apply all key-value pairs in params as filters to the QuerySet q
+        for key, value in params.items():
+            q = q.filter(**{key: value})
+        return q
 
     def search(self, params, page_number=0, page_size=10):
         """
@@ -59,7 +62,6 @@ class BaseDAO(ABC):
 
         # Delegate field-level filtering to the subclass
         q = self.apply_filters(q, params)
-
         # page_number == 0 means return all records without pagination
         if page_number == 0:
             return q
