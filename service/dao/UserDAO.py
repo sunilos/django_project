@@ -12,3 +12,6 @@ class UserDAO(BaseDAO):
 
     def get_model(self):
         return User
+
+    def get_Unique(self):
+        return ["login"]

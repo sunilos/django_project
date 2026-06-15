@@ -6,3 +6,6 @@ class MarksheetDAO(BaseDAO):
 
     def get_model(self):
         return Marksheet
+
+    def get_Unique(self):
+        return ["rollNumber"]

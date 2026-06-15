@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from service.dao.BaseDAO import DuplicateValueError
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,9 @@ class BaseRestCtl(APIView, ABC):
     # --- Default CRUD implementations ---
 
     def get(self, request, id=None):
-        """Return a single record by id, or a (optionally filtered) list when id is omitted.
 
+        """Return a single record by id, or a (optionally filtered) list when id is omitted.
+       
         When id is omitted and the request carries a JSON body, each key/value
         pair is forwarded to service.search() so the caller can narrow results
         without a dedicated search endpoint.
@@ -69,6 +71,8 @@ class BaseRestCtl(APIView, ABC):
         logger.info("%s.get() id=%s", self.__class__.__name__, id)
         service = self.get_service()
         serializer_class = self.get_serializer_class()
+
+        # if id received return one record, else search with optional filters from request body
         if id:
             obj = service.get(id)
             if obj is None:
@@ -77,13 +81,10 @@ class BaseRestCtl(APIView, ABC):
                 )
             return self.success_response(serializer_class(obj).data)
 
-        print("request.data:", request.data)
+        # If request.data is not a dict, filters will be empty and all records returned
         filters = request.data if isinstance(request.data, dict) else {}
-        if filters:
-            logger.info(
-                "%s.get() applying filters=%s", self.__class__.__name__, filters
-            )
         queryset = service.search(filters)
+
         return self.success_response(serializer_class(queryset, many=True).data)
 
     @classmethod
@@ -134,7 +135,10 @@ class BaseRestCtl(APIView, ABC):
             return self.error_response(errors, "Validation failed")
 
         obj = self.get_model()(**request.data)
-        self.get_service().save(obj)
+        try:
+            self.get_service().save(obj)
+        except DuplicateValueError as e:
+            return self.error_response(None, str(e))
         msg = f"{self.get_resource_name()} saved successfully"
         return self.success_response(
             self.get_serializer_class()(obj).data,
@@ -157,7 +161,10 @@ class BaseRestCtl(APIView, ABC):
 
         for field, value in request.data.items():
             setattr(obj, field, value)
-        service.save(obj)
+        try:
+            service.save(obj)
+        except DuplicateValueError as e:
+            return self.error_response(None, str(e))
         msg = f"{self.get_resource_name()} updated successfully"
         return self.success_response(self.get_serializer_class()(obj).data, msg)
 

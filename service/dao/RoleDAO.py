@@ -6,3 +6,6 @@ class RoleDAO(BaseDAO):
 
     def get_model(self):
         return Role
+
+    def get_Unique(self):
+        return ["name"]   

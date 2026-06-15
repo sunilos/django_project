@@ -7,3 +7,6 @@ class SubjectDAO(BaseDAO):
 
     def get_model(self):
         return Subject
+
+    def get_Unique(self):
+        return ["subjectName"]

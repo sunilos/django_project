@@ -5,6 +5,9 @@ from django.core.paginator import Paginator
 
 logger = logging.getLogger(__name__)
 
+class DuplicateValueError(Exception):
+    pass
+
 
 class BaseDAO(ABC):
 
@@ -18,10 +21,26 @@ class BaseDAO(ABC):
     def get_all(self):
         return self.get_model().objects.all()
 
+    def _check_unique_keys(self, obj):
+        unique_keys = self.get_Unique()
+        errors = []
+        if not unique_keys:
+            return
+        for key in unique_keys:
+            value = getattr(obj, key)
+            qs = self.get_model().objects.filter(**{key: value})
+            if obj.id:
+                qs = qs.exclude(id=obj.id)
+            if qs.exists():
+                errors.append(f"{key}='{value}' already exists")
+        if errors:
+            raise DuplicateValueError("; ".join(errors))
+
     def save(self, obj):
         is_new = obj.id == 0
         if is_new:
             obj.id = None
+        self._check_unique_keys(obj)
         obj.save()
         logger.info(
             "%s.save() %s pk=%s",
@@ -73,3 +92,7 @@ class BaseDAO(ABC):
     @abstractmethod
     def get_model(self):
         pass
+
+    @abstractmethod
+    def get_Unique(self):
+        return None

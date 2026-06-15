@@ -6,3 +6,6 @@ class StudentDAO(BaseDAO):
 
     def get_model(self):
         return Student
+
+    def get_Unique(self):
+        return None
