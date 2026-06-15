@@ -17,7 +17,7 @@ class BaseRestCtl(APIView, ABC):
 
     @abstractmethod
     def get_service(self):
-        """Return the Django service class for this controller."""
+        """Return an instance of the service for this controller."""
         pass
 
     def input_validation(self, _data):
@@ -35,12 +35,16 @@ class BaseRestCtl(APIView, ABC):
 
     # --- Response helpers ---
 
-    def success_response(self, data=None, message="", stcode=status.HTTP_200_OK):
+    def success_response(
+        self, data=None, message="", stcode=status.HTTP_200_OK, pagination=None
+    ):
         res_data = {
             "error": False,
             "message": message,
             "data": data,
         }
+        if pagination is not None:
+            res_data["pagination"] = pagination
         return Response(res_data, status=stcode)
 
     def error_response(
@@ -63,7 +67,7 @@ class BaseRestCtl(APIView, ABC):
         without a dedicated search endpoint.
         """
         logger.info("%s.get() id=%s", self.__class__.__name__, id)
-        service = self.get_service()()
+        service = self.get_service()
         serializer_class = self.get_serializer_class()
         if id:
             obj = service.get(id)
@@ -85,6 +89,7 @@ class BaseRestCtl(APIView, ABC):
     @classmethod
     def search_view(cls):
         """Return an as_view() entry where POST routes to search() instead of create."""
+
         class _SearchView(cls):
             def post(self, request, *args, **kwargs):
                 return self.search(request)
@@ -93,14 +98,32 @@ class BaseRestCtl(APIView, ABC):
         return _SearchView.as_view()
 
     def search(self, request):
-        filters = request.data if isinstance(request.data, dict) else {}
-        if filters:
-            logger.info(
-                "%s.search() applying filters=%s", self.__class__.__name__, filters
-            )
-        queryset = self.get_service()().search(filters)
+        filters = dict(request.data) if isinstance(request.data, dict) else {}
+
+        page_number = int(filters.pop("pageNo", 0) or 0)
+        page_size = int(filters.pop("pageSize", 10) or 10)
+
+        # BaseService.search mutates filters to set has_next/has_previous when paginated
+        result = self.get_service().search(
+            filters, page_number=page_number, page_size=page_size
+        )
+
+        # When paginated, result is a Django Page object; extract the record list
+        if page_number:
+            objects = result.object_list
+            pagination = {
+                "has_next": filters.get("has_next", False),
+                "has_previous": filters.get("has_previous", False),
+                "start_index": filters.get("start_index", 0),
+                "end_index": filters.get("end_index", 0),
+            }
+        else:
+            objects = result
+            pagination = None
+
         return self.success_response(
-            self.get_serializer_class()(queryset, many=True).data
+            self.get_serializer_class()(objects, many=True).data,
+            pagination=pagination,
         )
 
     def post(self, request):
@@ -111,7 +134,7 @@ class BaseRestCtl(APIView, ABC):
             return self.error_response(errors, "Validation failed")
 
         obj = self.get_model()(**request.data)
-        self.get_service()().save(obj)
+        self.get_service().save(obj)
         msg = f"{self.get_resource_name()} saved successfully"
         return self.success_response(
             self.get_serializer_class()(obj).data,
@@ -122,7 +145,7 @@ class BaseRestCtl(APIView, ABC):
     def put(self, request, id):
         """Validate and update an existing record by id; return 404 if not found or 400 on validation failure."""
         logger.info("%s.put() id=%s", self.__class__.__name__, id)
-        service = self.get_service()()
+        service = self.get_service()
         obj = service.get(id)
         if obj is None:
             msg = f"{self.get_resource_name()} not found"
@@ -141,7 +164,7 @@ class BaseRestCtl(APIView, ABC):
     def delete(self, request, id):
         """Delete a record by id; return 404 if not found."""
         logger.info("%s.delete() id=%s", self.__class__.__name__, id)
-        service = self.get_service()()
+        service = self.get_service()
         obj = service.get(id)
         if obj is None:
             msg = f"{self.get_resource_name()} not found"

@@ -22,7 +22,7 @@ class UserRestCtl(BaseRestCtl):
         return User
 
     def get_service(self):
-        return UserService
+        return UserService()
 
     def get_serializer_class(self):
         return UserSerializers
@@ -98,7 +98,7 @@ class UserLoginRestCtl(BaseRestCtl):
         return User
 
     def get_service(self):
-        return UserService
+        return UserService()
 
     def get_serializer_class(self):
         return UserSerializers
@@ -156,7 +156,7 @@ class ChangePasswordRestCtl(BaseRestCtl):
         return User
 
     def get_service(self):
-        return UserService
+        return UserService()
 
     def get_serializer_class(self):
         return UserSerializers
@@ -224,7 +224,7 @@ class ForgotPasswordRestCtl(BaseRestCtl):
         return User
 
     def get_service(self):
-        return ForgetPasswordService
+        return ForgetPasswordService()
 
     def get_serializer_class(self):
         return UserSerializers
@@ -277,7 +277,7 @@ class UserRegistrationRestCtl(BaseRestCtl):
         return User
 
     def get_service(self):
-        return UserService
+        return UserService()
 
     def get_serializer_class(self):
         return UserSerializers

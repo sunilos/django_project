@@ -10,7 +10,7 @@ class RoleRestCtl(BaseRestCtl):
         return Role
 
     def get_service(self):
-        return RoleService
+        return RoleService()
 
     def get_serializer_class(self):
         return RoleSerializers

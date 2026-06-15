@@ -12,7 +12,7 @@ class FacultyRestCtl(BaseRestCtl):
         return Faculty
 
     def get_service(self):
-        return FacultyService
+        return FacultyService()
 
     def get_serializer_class(self):
         return FacultySerializers

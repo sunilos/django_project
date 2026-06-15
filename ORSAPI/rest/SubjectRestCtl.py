@@ -12,7 +12,7 @@ class SubjectRestCtl(BaseRestCtl):
         return Subject
 
     def get_service(self):
-        return SubjectService
+        return SubjectService()
 
     def get_serializer_class(self):
         return SubjectSerializers

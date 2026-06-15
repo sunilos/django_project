@@ -10,7 +10,7 @@ class MarksheetRestCtl(BaseRestCtl):
         return Marksheet
 
     def get_service(self):
-        return MarksheetService
+        return MarksheetService()
 
     def get_serializer_class(self):
         return MarksheetSerializers

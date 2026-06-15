@@ -12,7 +12,7 @@ class StudentRestCtl(BaseRestCtl):
         return Student
 
     def get_service(self):
-        return StudentService
+        return StudentService()
 
     def get_serializer_class(self):
         return StudentSerializers

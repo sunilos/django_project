@@ -10,7 +10,7 @@ class CollegeRestCtl(BaseRestCtl):
         return College
 
     def get_service(self):
-        return CollegeService
+        return CollegeService()
 
     def get_serializer_class(self):
         return CollegeSerializers
