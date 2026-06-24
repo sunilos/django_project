@@ -98,8 +98,17 @@ class BaseRestCtl(APIView, ABC):
         _SearchView.__name__ = f"{cls.__name__}SearchView"
         return _SearchView.as_view()
 
+    def pdfReport(self, request):
+        """Generate a PDF report based on request data; implementation is controller-specific."""
+        return self.error_response(
+            None, "PDF report generation not implemented for this resource", status.HTTP_501_NOT_IMPLEMENTED
+        )   
+
     def search(self, request):
         filters = dict(request.data) if isinstance(request.data, dict) else {}
+
+        report_type = filters.pop("report_type", None)  
+
 
         page_number = int(filters.pop("pageNo", 0) or 0)
         page_size = int(filters.pop("pageSize", 10) or 10)
@@ -121,6 +130,9 @@ class BaseRestCtl(APIView, ABC):
         else:
             objects = result
             pagination = None
+
+        if report_type == "pdf":
+            return self.pdfReport(request)
 
         return self.success_response(
             self.get_serializer_class()(objects, many=True).data,

@@ -1,5 +1,8 @@
-﻿from datetime import datetime
+﻿import os
+import uuid
+from datetime import datetime
 
+from django.conf import settings
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
@@ -162,14 +165,14 @@ class ChangePasswordRestCtl(BaseRestCtl):
         return UserSerializers
 
     def post(self, request):
-        loginId = request.data.get("loginId", "")
+        login = request.data.get("login", "")
         old_password = request.data.get("oldPassword", "")
         new_password = request.data.get("newPassword", "")
         confirm_password = request.data.get("confirmPassword", "")
 
         errors = {}
-        if not loginId:
-            errors["loginId"] = "Login cannot be null"
+        if not login:
+            errors["login"] = "Login cannot be null"
         if not old_password:
             errors["oldPassword"] = "Old Password cannot be null"
         if not new_password:
@@ -182,7 +185,7 @@ class ChangePasswordRestCtl(BaseRestCtl):
             return self.error_response(errors, "Validation failed", status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(login=loginId)
+            user = User.objects.get(login=login)
         except User.DoesNotExist:
             return self.error_response(None, "User not found", status.HTTP_404_NOT_FOUND)
 
@@ -340,3 +343,60 @@ class UserPreloadRestCtl(APIView):
             "roles": [{"id": r.get_key(), "value": r.get_value()} for r in Role.objects.order_by("name")],
         }
         return Response({"error": False, "message": "", "data": data})
+
+
+class UploadUserPhotoRestCtl(BaseRestCtl):
+    """
+    REST endpoint to upload a user profile photo.
+
+    POST /ORSAPI/api/User/upload-photo/
+
+    Request: multipart/form-data
+        user_id  — ID of the user whose photo is being uploaded
+        photo    — image file
+
+    Responses:
+        200 - Success   : {"error": false, "message": "Photo uploaded successfully", "data": {...user}}
+        400 - Validation: {"error": true,  "message": "...", "errors": {...}}
+        404 - Not found : {"error": true,  "message": "User not found"}
+    """
+
+    def get_model(self):
+        return User
+
+    def get_service(self):
+        return UserService()
+
+    def get_serializer_class(self):
+        return UserSerializers
+
+    def post(self, request):
+        user_id = request.data.get("user_id", "")
+        photo_file = request.FILES.get("photo")
+
+        errors = {}
+        if not user_id:
+            errors["user_id"] = "User ID cannot be null"
+        if not photo_file:
+            errors["photo"] = "Photo file cannot be null"
+        if errors:
+            return self.error_response(errors, "Validation failed", status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=int(user_id))
+        except (User.DoesNotExist, ValueError):
+            return self.error_response(None, "User not found", status.HTTP_404_NOT_FOUND)
+
+        ext = os.path.splitext(photo_file.name)[1].lower()
+        filename = f"user_{uuid.uuid4().hex}{ext}"
+        dest_dir = os.path.join(settings.MEDIA_ROOT, settings.USER_PHOTO_DIR)
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, filename)
+        with open(dest_path, "wb+") as f:
+            for chunk in photo_file.chunks():
+                f.write(chunk)
+
+        user.photo = f"{settings.USER_PHOTO_DIR}/{filename}"
+        UserService().save(user)
+
+        return self.success_response(UserSerializers(user).data, "Photo uploaded successfully")
