@@ -37,29 +37,30 @@ class FacultyListCtl(BaseCtl):
         self.form["email"] = requestForm.get("email", None)
         self.form["college_ID"] = requestForm.get("college_ID", None)
         self.form["course_ID"] = requestForm.get("course_ID", None)
+        self.form["subject_ID"] = requestForm.get("subject_ID", None)
+        self.form["page_number"] = int(requestForm.get("page_number", 1) or 1)
 
     def display(self, request, params={}):
-        self.page_list = self.get_service().search(self.form)
-        res = render(
+        page_list = self.get_service().search(self.form, page_number=1)
+        return render(
             request,
             self.get_template(),
-            {"pageList": self.page_list, "preload_data": self.preload(request)},
+            {"pageList": page_list, "form": self.form, "preload_data": self.preload(request)},
         )
-        return res
 
     def submit(self, request, params={}):
         self.request_to_form(request.POST)
-        self.page_list = self.get_service().search(self.form)
-        res = render(
+        page_number = int(self.form.get("page_number", 1))
+        page_list = self.get_service().search(self.form, page_number=page_number)
+        return render(
             request,
             self.get_template(),
             {
-                "pageList": self.page_list,
+                "pageList": page_list,
                 "form": self.form,
                 "preload_data": self.preload(request),
             },
         )
-        return res
 
     def get_template(self):
         return "ors/FacultyList.html"
