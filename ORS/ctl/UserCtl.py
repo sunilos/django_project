@@ -2,7 +2,6 @@ import os
 import uuid
 from datetime import datetime
 from django.conf import settings
-from django.db.models.manager import BaseManager
 from django.shortcuts import render, redirect
 from service.utility.DataValidator import DataValidator
 from django.http import HttpResponse
@@ -18,7 +17,7 @@ class UserCtl(BaseCtl):
 
     def preload(self, request):
         """Load role list for the role dropdown before rendering the form."""
-        role_list: BaseManager[Role] = RoleService().search(self.form)
+        role_list = RoleService().search({})
         gender_list = ["Male", "Female"]
         self.preload_data["role_list"] = role_list
         self.preload_data["gender_list"] = gender_list
@@ -31,7 +30,6 @@ class UserCtl(BaseCtl):
         self.preload_data["gender_select"] = HtmlUtility.get_list_from_list(
             "gender", self.form.get("gender"), self.preload_data["gender_list"]
         )
-        print("a-------", self.form.get("gender"))
         return self.preload_data
 
     def request_to_form(self, requestForm):
