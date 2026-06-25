@@ -12,7 +12,7 @@ class MarksheetCtl(BaseCtl):
 
     def preload(self, request):
         """Load student list for the student dropdown before rendering the form."""
-        student_list = StudentService().search(self.form)
+        student_list = StudentService().search({})
         self.preload_data["student_list"] = student_list
         self.preload_data["student_select"] = HtmlUtility.get_list_from_beans(
             "student_id",
